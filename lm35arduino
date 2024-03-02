@@ -1,0 +1,54 @@
+#include <TimerThree.h> // Include TimerThree library
+
+const int lm35Pin = A0; // LM35 connected to analog pin A0
+const int ledPin = 8;   // LED connected to digital pin 8
+
+float Vout;
+float Temp;
+unsigned long currentTime = 0;
+unsigned long previousTime = 0;
+unsigned long interval = 500; // initial interval for LED blinking (500ms)
+boolean ledState = LOW;       // current state of the LED
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(ledPin, OUTPUT);
+
+  // Initialize timer interrupt with a frequency of 1 kHz (1000 microseconds)
+  Timer3.initialize(1000);
+  // Attach the timer interrupt function (incrementTime) to the timer
+  Timer3.attachInterrupt(incrementTime);
+}
+
+void loop() {
+  // Read analog voltage from LM35 temperature sensor
+  Vout = analogRead(lm35Pin);
+  // Convert analog voltage to temperature in degrees Celsius
+  Temp = (Vout * 500) / 1023;
+
+  // Print temperature to serial monitor
+  Serial.print("Temperature in Degree Celsius = ");
+  Serial.println(Temp);
+
+  // Adjust LED blinking interval based on temperature
+  if (Temp >= 30) {
+    interval = 500; // set interval to 500ms if temperature is above or equal to 30
+  } else {
+    interval = 250; // set interval to 250ms if temperature is below 30
+  }
+
+  // Check if enough time has elapsed to toggle the LED
+  if (currentTime - previousTime >= interval) {
+    // Toggle LED state
+    ledState = !ledState;
+    // Set LED pin to the current LED state
+    digitalWrite(ledPin, ledState);
+    // Update the previous time to the current time
+    previousTime = currentTime;
+  }
+}
+
+// Timer interrupt function to increment current time
+void incrementTime() {
+  currentTime++; // Increment current time every 1 millisecond
+}
